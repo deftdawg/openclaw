@@ -1,8 +1,9 @@
 /**
- * Signal reactions via signal-cli JSON-RPC API
+ * Signal reactions via signal-cli JSON-RPC or REST API
  */
 
 import { loadConfig } from "../config/config.js";
+import type { SignalApiMode } from "../config/types.js";
 import { resolveSignalAccount } from "./accounts.js";
 import { signalRpcRequest } from "./client.js";
 
@@ -78,7 +79,8 @@ function resolveReactionRpcContext(
     throw new Error("Signal base URL is required");
   }
   const account = opts.account?.trim() || resolvedAccount?.config.account?.trim();
-  return { baseUrl, account };
+  const apiMode: SignalApiMode = resolvedAccount?.apiMode ?? "jsonrpc";
+  return { baseUrl, account, apiMode };
 }
 
 /**
@@ -98,7 +100,7 @@ export async function sendReactionSignal(
     cfg: loadConfig(),
     accountId: opts.accountId,
   });
-  const { baseUrl, account } = resolveReactionRpcContext(opts, accountInfo);
+  const { baseUrl, account, apiMode } = resolveReactionRpcContext(opts, accountInfo);
 
   const normalizedRecipient = normalizeSignalUuid(recipient);
   const groupId = opts.groupId?.trim();
@@ -139,6 +141,8 @@ export async function sendReactionSignal(
   const result = await signalRpcRequest<{ timestamp?: number }>("sendReaction", params, {
     baseUrl,
     timeoutMs: opts.timeoutMs,
+    apiMode,
+    account,
   });
 
   return {
@@ -164,7 +168,7 @@ export async function removeReactionSignal(
     cfg: loadConfig(),
     accountId: opts.accountId,
   });
-  const { baseUrl, account } = resolveReactionRpcContext(opts, accountInfo);
+  const { baseUrl, account, apiMode } = resolveReactionRpcContext(opts, accountInfo);
 
   const normalizedRecipient = normalizeSignalUuid(recipient);
   const groupId = opts.groupId?.trim();
@@ -206,6 +210,8 @@ export async function removeReactionSignal(
   const result = await signalRpcRequest<{ timestamp?: number }>("sendReaction", params, {
     baseUrl,
     timeoutMs: opts.timeoutMs,
+    apiMode,
+    account,
   });
 
   return {

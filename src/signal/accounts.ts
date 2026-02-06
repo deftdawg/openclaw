@@ -1,5 +1,5 @@
 import type { OpenClawConfig } from "../config/config.js";
-import type { SignalAccountConfig } from "../config/types.js";
+import type { SignalAccountConfig, SignalApiMode } from "../config/types.js";
 import { DEFAULT_ACCOUNT_ID, normalizeAccountId } from "../routing/session-key.js";
 
 export type ResolvedSignalAccount = {
@@ -8,6 +8,7 @@ export type ResolvedSignalAccount = {
   name?: string;
   baseUrl: string;
   configured: boolean;
+  apiMode: SignalApiMode;
   config: SignalAccountConfig;
 };
 
@@ -74,12 +75,14 @@ export function resolveSignalAccount(params: {
     typeof merged.httpPort === "number" ||
     typeof merged.autoStart === "boolean",
   );
+  const apiMode: SignalApiMode = merged.apiMode ?? "jsonrpc";
   return {
     accountId,
     enabled,
     name: merged.name?.trim() || undefined,
     baseUrl,
     configured,
+    apiMode,
     config: merged,
   };
 }

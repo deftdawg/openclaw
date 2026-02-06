@@ -1,4 +1,5 @@
 import { loadConfig } from "../config/config.js";
+import type { SignalApiMode } from "../config/types.js";
 import { resolveMarkdownTableMode } from "../config/markdown-tables.js";
 import { mediaKindFromMime } from "../media/constants.js";
 import { saveMediaBuffer } from "../media/store.js";
@@ -113,7 +114,8 @@ function resolveSignalRpcContext(
     throw new Error("Signal base URL is required");
   }
   const account = opts.account?.trim() || resolvedAccount?.config.account?.trim();
-  return { baseUrl, account };
+  const apiMode: SignalApiMode = resolvedAccount?.apiMode ?? "jsonrpc";
+  return { baseUrl, account, apiMode };
 }
 
 async function resolveAttachment(
@@ -140,7 +142,7 @@ export async function sendMessageSignal(
     cfg,
     accountId: opts.accountId,
   });
-  const { baseUrl, account } = resolveSignalRpcContext(opts, accountInfo);
+  const { baseUrl, account, apiMode } = resolveSignalRpcContext(opts, accountInfo);
   const target = parseTarget(to);
   let message = text ?? "";
   let messageFromPlaceholder = false;
@@ -216,6 +218,8 @@ export async function sendMessageSignal(
   const result = await signalRpcRequest<{ timestamp?: number }>("send", params, {
     baseUrl,
     timeoutMs: opts.timeoutMs,
+    apiMode,
+    account,
   });
   const timestamp = result?.timestamp;
   return {
@@ -228,7 +232,7 @@ export async function sendTypingSignal(
   to: string,
   opts: SignalRpcOpts & { stop?: boolean } = {},
 ): Promise<boolean> {
-  const { baseUrl, account } = resolveSignalRpcContext(opts);
+  const { baseUrl, account, apiMode } = resolveSignalRpcContext(opts);
   const targetParams = buildTargetParams(parseTarget(to), {
     recipient: true,
     group: true,
@@ -246,6 +250,8 @@ export async function sendTypingSignal(
   await signalRpcRequest("sendTyping", params, {
     baseUrl,
     timeoutMs: opts.timeoutMs,
+    apiMode,
+    account,
   });
   return true;
 }
@@ -258,7 +264,7 @@ export async function sendReadReceiptSignal(
   if (!Number.isFinite(targetTimestamp) || targetTimestamp <= 0) {
     return false;
   }
-  const { baseUrl, account } = resolveSignalRpcContext(opts);
+  const { baseUrl, account, apiMode } = resolveSignalRpcContext(opts);
   const targetParams = buildTargetParams(parseTarget(to), {
     recipient: true,
   });
@@ -276,6 +282,8 @@ export async function sendReadReceiptSignal(
   await signalRpcRequest("sendReceipt", params, {
     baseUrl,
     timeoutMs: opts.timeoutMs,
+    apiMode,
+    account,
   });
   return true;
 }
