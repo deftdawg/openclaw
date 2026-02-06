@@ -64,7 +64,6 @@ export type SignalEventHandlerDeps = {
   baseUrl: string;
   account?: string;
   accountId: string;
-  apiMode?: "jsonrpc" | "rest";
   blockStreaming?: boolean;
   historyLimit: number;
   groupHistories: Map<string, HistoryEntry[]>;
@@ -82,7 +81,6 @@ export type SignalEventHandlerDeps = {
   fetchAttachment: (params: {
     baseUrl: string;
     account?: string;
-    apiMode?: "jsonrpc" | "rest";
     attachment: SignalAttachment;
     sender?: string;
     groupId?: string;

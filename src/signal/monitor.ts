@@ -182,7 +182,6 @@ async function waitForSignalDaemonReady(params: {
 async function fetchAttachment(params: {
   baseUrl: string;
   account?: string;
-  apiMode?: "jsonrpc" | "rest";
   attachment: SignalAttachment;
   sender?: string;
   groupId?: string;
@@ -213,8 +212,6 @@ async function fetchAttachment(params: {
 
   const result = await signalRpcRequest<{ data?: string }>("getAttachment", rpcParams, {
     baseUrl: params.baseUrl,
-    apiMode: params.apiMode,
-    account: params.account,
   });
   if (!result?.data) {
     return null;
@@ -310,11 +307,7 @@ export async function monitorSignalProvider(opts: MonitorSignalOpts = {}): Promi
   const ignoreAttachments = opts.ignoreAttachments ?? accountInfo.config.ignoreAttachments ?? false;
   const sendReadReceipts = Boolean(opts.sendReadReceipts ?? accountInfo.config.sendReadReceipts);
 
-  const apiMode = accountInfo.apiMode;
-  const autoStart =
-    apiMode === "rest"
-      ? false
-      : (opts.autoStart ?? accountInfo.config.autoStart ?? !accountInfo.config.httpUrl);
+  const autoStart = opts.autoStart ?? accountInfo.config.autoStart ?? !accountInfo.config.httpUrl;
   const startupTimeoutMs = Math.min(
     120_000,
     Math.max(1_000, opts.startupTimeoutMs ?? accountInfo.config.startupTimeoutMs ?? 30_000),
@@ -362,7 +355,6 @@ export async function monitorSignalProvider(opts: MonitorSignalOpts = {}): Promi
       baseUrl,
       account,
       accountId: accountInfo.accountId,
-      apiMode,
       blockStreaming: accountInfo.config.blockStreaming,
       historyLimit,
       groupHistories,
@@ -388,7 +380,6 @@ export async function monitorSignalProvider(opts: MonitorSignalOpts = {}): Promi
     await runSignalSseLoop({
       baseUrl,
       account,
-      apiMode,
       abortSignal: opts.abortSignal,
       runtime,
       onEvent: (event) => {

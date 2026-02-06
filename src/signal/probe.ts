@@ -1,4 +1,3 @@
-import type { SignalApiMode } from "./client.js";
 import { signalCheck, signalRpcRequest } from "./client.js";
 
 export type SignalProbe = {
@@ -7,11 +6,6 @@ export type SignalProbe = {
   error?: string | null;
   elapsedMs: number;
   version?: string | null;
-};
-
-export type SignalProbeOpts = {
-  apiMode?: SignalApiMode;
-  account?: string;
 };
 
 function parseSignalVersion(value: unknown): string | null {
@@ -27,12 +21,7 @@ function parseSignalVersion(value: unknown): string | null {
   return null;
 }
 
-export async function probeSignal(
-  baseUrl: string,
-  timeoutMs: number,
-  opts: SignalProbeOpts = {},
-): Promise<SignalProbe> {
-  const apiMode = opts.apiMode ?? "jsonrpc";
+export async function probeSignal(baseUrl: string, timeoutMs: number): Promise<SignalProbe> {
   const started = Date.now();
   const result: SignalProbe = {
     ok: false,
@@ -41,7 +30,7 @@ export async function probeSignal(
     elapsedMs: 0,
     version: null,
   };
-  const check = await signalCheck(baseUrl, timeoutMs, apiMode);
+  const check = await signalCheck(baseUrl, timeoutMs);
   if (!check.ok) {
     return {
       ...result,
@@ -54,8 +43,6 @@ export async function probeSignal(
     const version = await signalRpcRequest("version", undefined, {
       baseUrl,
       timeoutMs,
-      apiMode,
-      account: opts.account,
     });
     result.version = parseSignalVersion(version);
   } catch (err) {

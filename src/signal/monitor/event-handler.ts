@@ -508,7 +508,6 @@ export function createSignalEventHandler(deps: SignalEventHandlerDeps) {
         const fetched = await deps.fetchAttachment({
           baseUrl: deps.baseUrl,
           account: deps.account,
-          apiMode: deps.apiMode,
           attachment: firstAttachment,
           sender: senderRecipient,
           groupId,
