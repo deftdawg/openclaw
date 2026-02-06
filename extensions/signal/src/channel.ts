@@ -277,7 +277,10 @@ export const signalPlugin: ChannelPlugin<ResolvedSignalAccount> = {
     }),
     probeAccount: async ({ account, timeoutMs }) => {
       const baseUrl = account.baseUrl;
-      return await getSignalRuntime().channel.signal.probeSignal(baseUrl, timeoutMs);
+      return await getSignalRuntime().channel.signal.probeSignal(baseUrl, timeoutMs, {
+        apiMode: account.apiMode,
+        account: account.config.account,
+      });
     },
     buildAccountSnapshot: ({ account, runtime, probe }) => ({
       accountId: account.accountId,
