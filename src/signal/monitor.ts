@@ -311,6 +311,7 @@ export async function monitorSignalProvider(opts: MonitorSignalOpts = {}): Promi
   const sendReadReceipts = Boolean(opts.sendReadReceipts ?? accountInfo.config.sendReadReceipts);
 
   const apiMode = accountInfo.apiMode;
+  const pollIntervalMs = accountInfo.pollIntervalMs;
   const autoStart =
     apiMode === "rest"
       ? false
@@ -389,6 +390,7 @@ export async function monitorSignalProvider(opts: MonitorSignalOpts = {}): Promi
       baseUrl,
       account,
       apiMode,
+      pollIntervalMs,
       abortSignal: opts.abortSignal,
       runtime,
       onEvent: (event) => {

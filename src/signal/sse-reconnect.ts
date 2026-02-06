@@ -11,10 +11,18 @@ const DEFAULT_RECONNECT_POLICY: BackoffPolicy = {
   jitter: 0.2,
 };
 
+const REST_RECONNECT_POLICY: BackoffPolicy = {
+  initialMs: 5_000,
+  maxMs: 30_000,
+  factor: 2,
+  jitter: 0.2,
+};
+
 type RunSignalSseLoopParams = {
   baseUrl: string;
   account?: string;
   apiMode?: SignalApiMode;
+  pollIntervalMs?: number;
   abortSignal?: AbortSignal;
   runtime: RuntimeEnv;
   onEvent: (event: SignalSseEvent) => void;
@@ -25,13 +33,15 @@ export async function runSignalSseLoop({
   baseUrl,
   account,
   apiMode,
+  pollIntervalMs,
   abortSignal,
   runtime,
   onEvent,
   policy,
 }: RunSignalSseLoopParams) {
+  const basePolicy = apiMode === "rest" ? REST_RECONNECT_POLICY : DEFAULT_RECONNECT_POLICY;
   const reconnectPolicy = {
-    ...DEFAULT_RECONNECT_POLICY,
+    ...basePolicy,
     ...policy,
   };
   let reconnectAttempts = 0;
@@ -49,6 +59,7 @@ export async function runSignalSseLoop({
         baseUrl,
         account,
         apiMode,
+        pollIntervalMs,
         abortSignal,
         onEvent: (event) => {
           reconnectAttempts = 0;

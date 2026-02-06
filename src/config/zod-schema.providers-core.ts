@@ -563,6 +563,7 @@ export const SignalAccountSchemaBase = z
     enabled: z.boolean().optional(),
     configWrites: z.boolean().optional(),
     apiMode: z.enum(["jsonrpc", "rest"]).optional(),
+    pollIntervalMs: z.number().int().min(1000).optional(),
     account: z.string().optional(),
     httpUrl: z.string().optional(),
     httpHost: z.string().optional(),
