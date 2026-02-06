@@ -342,6 +342,7 @@ const FIELD_LABELS: Record<string, string> = {
   "channels.whatsapp.dmPolicy": "WhatsApp DM Policy",
   "channels.whatsapp.selfChatMode": "WhatsApp Self-Phone Mode",
   "channels.whatsapp.debounceMs": "WhatsApp Message Debounce (ms)",
+  "channels.signal.apiMode": "Signal API Mode",
   "channels.signal.dmPolicy": "Signal DM Policy",
   "channels.imessage.dmPolicy": "iMessage DM Policy",
   "channels.bluebubbles.dmPolicy": "BlueBubbles DM Policy",
@@ -727,6 +728,8 @@ const FIELD_HELP: Record<string, string> = {
   "channels.whatsapp.selfChatMode": "Same-phone setup (bot uses your personal WhatsApp number).",
   "channels.whatsapp.debounceMs":
     "Debounce window (ms) for batching rapid consecutive messages from the same sender (0 to disable).",
+  "channels.signal.apiMode":
+    'API backend: "jsonrpc" (signal-cli daemon) or "rest" (signal-cli-rest-api / Home Assistant addon).',
   "channels.signal.dmPolicy":
     'Direct message access control ("pairing" recommended). "open" requires channels.signal.allowFrom=["*"].',
   "channels.imessage.dmPolicy":
