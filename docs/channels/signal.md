@@ -120,9 +120,22 @@ If you're using the [Home Assistant Signal Messenger addon](https://github.com/h
 Key differences from JSON-RPC mode:
 
 - **REST endpoints**: uses `/v2/send`, `/v1/reactions/{number}`, etc. instead of JSON-RPC
-- **WebSocket receive**: messages are received via WebSocket at `/v1/receive/{number}` instead of SSE
+- **HTTP polling**: messages are polled via HTTP at `/v1/receive/{number}` (default: every 30 seconds)
 - **No daemon auto-start**: `autoStart` is always disabled in REST mode (the external service must be running)
 - **Account required**: the `account` field (E.164 number) is required for most operations
+
+Configure the poll interval with `pollIntervalMs` (minimum 1000ms):
+
+```json5
+{
+  channels: {
+    signal: {
+      apiMode: "rest",
+      pollIntervalMs: 15000, // poll every 15 seconds
+    },
+  },
+}
+```
 
 ## Access control (DMs + groups)
 
@@ -200,6 +213,7 @@ Provider options:
 
 - `channels.signal.enabled`: enable/disable channel startup.
 - `channels.signal.apiMode`: `jsonrpc` (default) or `rest`. Use `rest` for [signal-cli-rest-api](https://github.com/bbernhard/signal-cli-rest-api) or [Home Assistant addon](https://github.com/haberda/signal-addon).
+- `channels.signal.pollIntervalMs`: poll interval in ms for REST mode (default: 30000, min: 1000).
 - `channels.signal.account`: E.164 for the bot account.
 - `channels.signal.cliPath`: path to `signal-cli`.
 - `channels.signal.httpUrl`: full daemon URL (overrides host/port).

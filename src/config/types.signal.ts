@@ -15,6 +15,8 @@ export type SignalApiMode = "jsonrpc" | "rest";
 export type SignalAccountConfig = {
   /** API mode: "jsonrpc" (signal-cli daemon) or "rest" (signal-cli-rest-api). Default: jsonrpc. */
   apiMode?: SignalApiMode;
+  /** Poll interval in ms for REST API mode (default: 30000). */
+  pollIntervalMs?: number;
   /** Optional display name for this account (used in CLI/UI lists). */
   name?: string;
   /** Optional provider capability tags used for agent/runtime guidance. */

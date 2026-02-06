@@ -302,13 +302,14 @@ export async function streamSignalEvents(params: {
   baseUrl: string;
   account?: string;
   apiMode?: SignalApiMode;
+  pollIntervalMs?: number;
   abortSignal?: AbortSignal;
   onEvent: (event: SignalSseEvent) => void;
 }): Promise<void> {
   const apiMode = params.apiMode ?? "jsonrpc";
 
   if (apiMode === "rest") {
-    return streamSignalEventsWebSocket(params);
+    return streamSignalEventsRestPolling(params);
   }
   return streamSignalEventsSse(params);
 }
@@ -396,45 +397,74 @@ async function streamSignalEventsSse(params: {
   flushEvent();
 }
 
-async function streamSignalEventsWebSocket(params: {
+async function streamSignalEventsRestPolling(params: {
   baseUrl: string;
   account?: string;
   abortSignal?: AbortSignal;
+  pollIntervalMs?: number;
   onEvent: (event: SignalSseEvent) => void;
 }): Promise<void> {
   const account = params.account;
   if (!account) {
-    throw new Error("Signal REST streaming requires account");
+    throw new Error("Signal REST polling requires account");
   }
 
   const baseUrl = normalizeBaseUrl(params.baseUrl);
-  const wsUrl = baseUrl.replace(/^http/, "ws") + `/v1/receive/${encodeURIComponent(account)}`;
+  const pollUrl = `${baseUrl}/v1/receive/${encodeURIComponent(account)}`;
+  const pollIntervalMs = params.pollIntervalMs ?? 30_000;
 
-  const { WebSocket } = await import("ws");
-  const ws = new WebSocket(wsUrl);
+  const fetchImpl = resolveFetch();
+  if (!fetchImpl) {
+    throw new Error("fetch is not available");
+  }
 
-  return new Promise<void>((resolve, reject) => {
-    const onAbort = () => {
-      ws.close();
-      resolve();
-    };
-    params.abortSignal?.addEventListener("abort", onAbort, { once: true });
+  while (!params.abortSignal?.aborted) {
+    try {
+      const res = await fetchImpl(pollUrl, {
+        method: "GET",
+        signal: params.abortSignal,
+      });
 
-    ws.on("open", () => {});
+      if (!res.ok) {
+        throw new Error(`Signal REST poll failed: ${res.status} ${res.statusText}`);
+      }
 
-    ws.on("message", (data) => {
-      const message = typeof data === "string" ? data : data.toString("utf8");
-      params.onEvent({ data: message });
+      const text = await res.text();
+      if (text && text.trim() && text.trim() !== "[]") {
+        try {
+          const messages = JSON.parse(text);
+          if (Array.isArray(messages)) {
+            for (const msg of messages) {
+              params.onEvent({ data: JSON.stringify(msg) });
+            }
+          } else {
+            params.onEvent({ data: text });
+          }
+        } catch {
+          params.onEvent({ data: text });
+        }
+      }
+    } catch (err) {
+      if (params.abortSignal?.aborted) {
+        return;
+      }
+      throw err;
+    }
+
+    if (params.abortSignal?.aborted) {
+      return;
+    }
+
+    await new Promise<void>((resolve) => {
+      const timer = setTimeout(resolve, pollIntervalMs);
+      params.abortSignal?.addEventListener(
+        "abort",
+        () => {
+          clearTimeout(timer);
+          resolve();
+        },
+        { once: true },
+      );
     });
-
-    ws.on("error", (err) => {
-      params.abortSignal?.removeEventListener("abort", onAbort);
-      reject(err);
-    });
-
-    ws.on("close", () => {
-      params.abortSignal?.removeEventListener("abort", onAbort);
-      resolve();
-    });
-  });
+  }
 }

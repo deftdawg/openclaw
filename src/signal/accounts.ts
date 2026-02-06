@@ -9,6 +9,7 @@ export type ResolvedSignalAccount = {
   baseUrl: string;
   configured: boolean;
   apiMode: SignalApiMode;
+  pollIntervalMs: number;
   config: SignalAccountConfig;
 };
 
@@ -76,6 +77,7 @@ export function resolveSignalAccount(params: {
     typeof merged.autoStart === "boolean",
   );
   const apiMode: SignalApiMode = merged.apiMode ?? "jsonrpc";
+  const pollIntervalMs = merged.pollIntervalMs ?? 30_000;
   return {
     accountId,
     enabled,
@@ -83,6 +85,7 @@ export function resolveSignalAccount(params: {
     baseUrl,
     configured,
     apiMode,
+    pollIntervalMs,
     config: merged,
   };
 }
