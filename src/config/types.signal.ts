@@ -9,8 +9,12 @@ import type { DmConfig } from "./types.messages.js";
 
 export type SignalReactionNotificationMode = "off" | "own" | "all" | "allowlist";
 export type SignalReactionLevel = "off" | "ack" | "minimal" | "extensive";
+/** API mode: "jsonrpc" uses signal-cli daemon, "rest" uses signal-cli-rest-api. */
+export type SignalApiMode = "jsonrpc" | "rest";
 
 export type SignalAccountConfig = {
+  /** API mode: "jsonrpc" (signal-cli daemon) or "rest" (signal-cli-rest-api). Default: jsonrpc. */
+  apiMode?: SignalApiMode;
   /** Optional display name for this account (used in CLI/UI lists). */
   name?: string;
   /** Optional provider capability tags used for agent/runtime guidance. */

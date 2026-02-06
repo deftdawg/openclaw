@@ -100,6 +100,30 @@ If you want to manage `signal-cli` yourself (slow JVM cold starts, container ini
 
 This skips auto-spawn and the startup wait inside OpenClaw. For slow starts when auto-spawning, set `channels.signal.startupTimeoutMs`.
 
+## REST API mode (Home Assistant addon)
+
+If you're using the [Home Assistant Signal Messenger addon](https://github.com/haberda/signal-addon) or [signal-cli-rest-api](https://github.com/bbernhard/signal-cli-rest-api), set `apiMode` to `rest`:
+
+```json5
+{
+  channels: {
+    signal: {
+      httpUrl: "http://homeassistant.local:8080",
+      account: "+15551234567",
+      apiMode: "rest",
+      autoStart: false,
+    },
+  },
+}
+```
+
+Key differences from JSON-RPC mode:
+
+- **REST endpoints**: uses `/v2/send`, `/v1/reactions/{number}`, etc. instead of JSON-RPC
+- **WebSocket receive**: messages are received via WebSocket at `/v1/receive/{number}` instead of SSE
+- **No daemon auto-start**: `autoStart` is always disabled in REST mode (the external service must be running)
+- **Account required**: the `account` field (E.164 number) is required for most operations
+
 ## Access control (DMs + groups)
 
 DMs:
@@ -175,6 +199,7 @@ Full configuration: [Configuration](/gateway/configuration)
 Provider options:
 
 - `channels.signal.enabled`: enable/disable channel startup.
+- `channels.signal.apiMode`: `jsonrpc` (default) or `rest`. Use `rest` for [signal-cli-rest-api](https://github.com/bbernhard/signal-cli-rest-api) or [Home Assistant addon](https://github.com/haberda/signal-addon).
 - `channels.signal.account`: E.164 for the bot account.
 - `channels.signal.cliPath`: path to `signal-cli`.
 - `channels.signal.httpUrl`: full daemon URL (overrides host/port).
