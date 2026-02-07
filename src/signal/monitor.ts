@@ -9,7 +9,7 @@ import { waitForTransportReady } from "../infra/transport-ready.js";
 import { saveMediaBuffer } from "../media/store.js";
 import { normalizeE164 } from "../utils.js";
 import { resolveSignalAccount } from "./accounts.js";
-import { signalCheck, signalRpcRequest } from "./client.js";
+import { getSignalRestServerMode, signalCheck, signalRpcRequest } from "./client.js";
 import { spawnSignalDaemon } from "./daemon.js";
 import { isSignalSenderAllowed, type resolveSignalSender } from "./identity.js";
 import { createSignalEventHandler } from "./monitor/event-handler.js";
@@ -148,6 +148,36 @@ function buildSignalReactionSystemEventText(params: {
   const base = `Signal reaction added: ${params.emojiLabel} by ${params.actorLabel} msg ${params.messageId}`;
   const withTarget = params.targetLabel ? `${base} from ${params.targetLabel}` : base;
   return params.groupLabel ? `${withTarget} in ${params.groupLabel}` : withTarget;
+}
+
+async function checkSignalRestApiMode(params: {
+  baseUrl: string;
+  account?: string;
+  runtime: RuntimeEnv;
+}): Promise<void> {
+  const { baseUrl, account, runtime } = params;
+  const mode = await getSignalRestServerMode(baseUrl, 2000);
+  // "unknown" means either signal-cli daemon (no /v1/about) or unreachable - don't warn
+  if (mode === "unknown" || mode === "json-rpc") {
+    return;
+  }
+  const modeMsg = `signal-cli-rest-api is running in "${mode}" mode, but openclaw requires "json-rpc" mode to receive messages.`;
+  const helpMsg =
+    "Set MODE=json-rpc in your signal-cli-rest-api container/environment to enable message reception.";
+  runtime.error?.(`⚠️  ${modeMsg}`);
+  runtime.error?.(`   ${helpMsg}`);
+  try {
+    const target = account?.trim();
+    if (target) {
+      await sendMessageSignal(
+        target,
+        `⚠️ OpenClaw Signal integration warning:\n\n${modeMsg}\n\n${helpMsg}`,
+        { baseUrl, account: target },
+      );
+    }
+  } catch {
+    // Best-effort notification; don't fail startup
+  }
 }
 
 async function waitForSignalDaemonReady(params: {
@@ -356,6 +386,10 @@ export async function monitorSignalProvider(opts: MonitorSignalOpts = {}): Promi
         runtime,
       });
     }
+
+    // Check if signal-cli-rest-api is running in correct mode (json-rpc)
+    // This probes /v1/about to detect mode and warns if not in json-rpc mode
+    await checkSignalRestApiMode({ baseUrl, account, runtime });
 
     const handleEvent = createSignalEventHandler({
       runtime,
