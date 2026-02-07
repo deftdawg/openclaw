@@ -9,7 +9,7 @@ import { waitForTransportReady } from "../infra/transport-ready.js";
 import { saveMediaBuffer } from "../media/store.js";
 import { normalizeE164 } from "../utils.js";
 import { resolveSignalAccount } from "./accounts.js";
-import { signalCheck, signalRpcRequest } from "./client.js";
+import { getSignalRestServerMode, signalCheck, signalRpcRequest } from "./client.js";
 import { spawnSignalDaemon } from "./daemon.js";
 import { isSignalSenderAllowed, type resolveSignalSender } from "./identity.js";
 import { createSignalEventHandler } from "./monitor/event-handler.js";
@@ -355,6 +355,32 @@ export async function monitorSignalProvider(opts: MonitorSignalOpts = {}): Promi
         logIntervalMs: 10_000,
         runtime,
       });
+    }
+
+    // For REST mode, check if the server supports message streaming (requires json-rpc mode)
+    // In native/normal modes, /v1/receive consumes messages which would break other clients
+    let skipMessageReception = false;
+    if (apiMode === "rest") {
+      const serverMode = await getSignalRestServerMode(baseUrl);
+      if (serverMode !== "json-rpc") {
+        runtime.log?.(
+          `[Signal] signal-cli-rest-api is running in "${serverMode}" mode. ` +
+            `Message reception requires "json-rpc" mode (set MODE=json-rpc in Docker). ` +
+            `Operating in SEND-ONLY mode.`,
+        );
+        skipMessageReception = true;
+      }
+    }
+
+    if (skipMessageReception) {
+      runtime.log?.(
+        `[Signal] Running in send-only mode. To receive messages, configure signal-cli-rest-api with MODE=json-rpc`,
+      );
+      // Keep the monitor alive but don't stream events (would consume messages)
+      await new Promise<void>((resolve) => {
+        opts.abortSignal?.addEventListener("abort", () => resolve(), { once: true });
+      });
+      return;
     }
 
     const handleEvent = createSignalEventHandler({

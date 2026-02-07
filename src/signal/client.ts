@@ -2,6 +2,8 @@ import { randomUUID } from "node:crypto";
 import { resolveFetch } from "../infra/fetch.js";
 
 export type SignalApiMode = "jsonrpc" | "rest";
+/** The mode signal-cli-rest-api is running in (json-rpc, native, normal) */
+export type SignalRestServerMode = "json-rpc" | "native" | "normal" | "unknown";
 
 export type SignalRpcOptions = {
   baseUrl: string;
@@ -295,6 +297,49 @@ export async function signalCheck(
       status: null,
       error: err instanceof Error ? err.message : String(err),
     };
+  }
+}
+
+/**
+ * Get the server mode of signal-cli-rest-api via /v1/about.
+ * Returns "json-rpc", "native", "normal", or "unknown".
+ *
+ * IMPORTANT: Only json-rpc mode supports WebSocket streaming for message reception.
+ * In native/normal modes, the /v1/receive endpoint CONSUMES messages from Signal's
+ * servers, which would prevent other clients from receiving them.
+ */
+export async function getSignalRestServerMode(
+  baseUrl: string,
+  timeoutMs = DEFAULT_TIMEOUT_MS,
+): Promise<SignalRestServerMode> {
+  const normalized = normalizeBaseUrl(baseUrl);
+  try {
+    const fetchImpl = resolveFetch();
+    if (!fetchImpl) {
+      return "unknown";
+    }
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
+    let res: Response;
+    try {
+      res = await fetchImpl(`${normalized}/v1/about`, {
+        method: "GET",
+        signal: controller.signal,
+      });
+    } finally {
+      clearTimeout(timer);
+    }
+    if (!res.ok) {
+      return "unknown";
+    }
+    const data = (await res.json()) as { mode?: string };
+    const mode = data?.mode?.toLowerCase();
+    if (mode === "json-rpc") return "json-rpc";
+    if (mode === "native") return "native";
+    if (mode === "normal") return "normal";
+    return "unknown";
+  } catch {
+    return "unknown";
   }
 }
 

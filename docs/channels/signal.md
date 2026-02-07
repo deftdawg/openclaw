@@ -120,22 +120,21 @@ If you're using the [Home Assistant Signal Messenger addon](https://github.com/h
 Key differences from JSON-RPC mode:
 
 - **REST endpoints**: uses `/v2/send`, `/v1/reactions/{number}`, etc. instead of JSON-RPC
-- **HTTP polling**: messages are polled via HTTP at `/v1/receive/{number}` (default: every 30 seconds)
+- **WebSocket streaming**: messages are received via WebSocket at `/v1/receive/{number}` (requires json-rpc server mode)
 - **No daemon auto-start**: `autoStart` is always disabled in REST mode (the external service must be running)
 - **Account required**: the `account` field (E.164 number) is required for most operations
 
-Configure the poll interval with `pollIntervalMs` (minimum 1000ms):
+### Important: Server mode requirement
 
-```json5
-{
-  channels: {
-    signal: {
-      apiMode: "rest",
-      pollIntervalMs: 15000, // poll every 15 seconds
-    },
-  },
-}
+**To receive messages, signal-cli-rest-api must run in `json-rpc` mode.** Set `MODE=json-rpc` in your Docker environment:
+
+```bash
+docker run -e MODE=json-rpc ...
 ```
+
+If running in `native` or `normal` mode, OpenClaw operates in **send-only mode** - you can send messages but cannot receive incoming messages. This is because the `/v1/receive/{number}` endpoint in native/normal modes **consumes messages** from Signal's servers, which would prevent other clients (like your phone) from receiving them.
+
+OpenClaw automatically detects the server mode at startup and will log a warning if message reception is disabled.
 
 ## Access control (DMs + groups)
 
