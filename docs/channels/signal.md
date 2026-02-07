@@ -100,9 +100,9 @@ If you want to manage `signal-cli` yourself (slow JVM cold starts, container ini
 
 This skips auto-spawn and the startup wait inside OpenClaw. For slow starts when auto-spawning, set `channels.signal.startupTimeoutMs`.
 
-## REST API mode (Home Assistant addon)
+## Addon mode (Home Assistant / signal-cli-rest-api)
 
-If you're using the [Home Assistant Signal Messenger addon](https://github.com/haberda/signal-addon) or [signal-cli-rest-api](https://github.com/bbernhard/signal-cli-rest-api), set `apiMode` to `rest`:
+If you're using the [Home Assistant Signal Messenger addon](https://github.com/haberda/signal-addon) or [signal-cli-rest-api](https://github.com/bbernhard/signal-cli-rest-api), set `apiMode` to `addon`:
 
 ```json5
 {
@@ -110,18 +110,18 @@ If you're using the [Home Assistant Signal Messenger addon](https://github.com/h
     signal: {
       httpUrl: "http://homeassistant.local:8080",
       account: "+15551234567",
-      apiMode: "rest",
+      apiMode: "addon",
       autoStart: false,
     },
   },
 }
 ```
 
-Key differences from JSON-RPC mode:
+Key differences from jsonrpc mode (signal-cli daemon):
 
-- **REST endpoints**: uses `/v2/send`, `/v1/reactions/{number}`, etc. instead of JSON-RPC
+- **REST endpoints**: uses `/v1/...` and `/v2/...` endpoints (no `/api` prefix)
 - **HTTP polling**: messages are received by polling `/v1/receive/{number}` (default: every 30 seconds)
-- **No daemon auto-start**: `autoStart` is always disabled in REST mode (the external service must be running)
+- **No daemon auto-start**: `autoStart` is always disabled in addon mode (the external service must be running)
 - **Account required**: the `account` field (E.164 number) is required for most operations
 
 Configure the poll interval with `pollIntervalMs` (minimum 1000ms):
@@ -130,7 +130,7 @@ Configure the poll interval with `pollIntervalMs` (minimum 1000ms):
 {
   channels: {
     signal: {
-      apiMode: "rest",
+      apiMode: "addon",
       pollIntervalMs: 15000, // poll every 15 seconds
     },
   },
@@ -222,8 +222,8 @@ Full configuration: [Configuration](/gateway/configuration)
 Provider options:
 
 - `channels.signal.enabled`: enable/disable channel startup.
-- `channels.signal.apiMode`: `jsonrpc` (default) or `rest`. Use `rest` for [signal-cli-rest-api](https://github.com/bbernhard/signal-cli-rest-api) or [Home Assistant addon](https://github.com/haberda/signal-addon).
-- `channels.signal.pollIntervalMs`: poll interval in ms for REST mode (default: 30000, min: 1000).
+- `channels.signal.apiMode`: `jsonrpc` (default, signal-cli daemon) or `addon` (signal-cli-rest-api / Home Assistant addon).
+- `channels.signal.pollIntervalMs`: poll interval in ms for addon mode (default: 30000, min: 1000).
 - `channels.signal.account`: E.164 for the bot account.
 - `channels.signal.cliPath`: path to `signal-cli`.
 - `channels.signal.httpUrl`: full daemon URL (overrides host/port).

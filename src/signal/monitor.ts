@@ -182,7 +182,7 @@ async function waitForSignalDaemonReady(params: {
 async function fetchAttachment(params: {
   baseUrl: string;
   account?: string;
-  apiMode?: "jsonrpc" | "rest";
+  apiMode?: "jsonrpc" | "addon";
   attachment: SignalAttachment;
   sender?: string;
   groupId?: string;
@@ -313,7 +313,7 @@ export async function monitorSignalProvider(opts: MonitorSignalOpts = {}): Promi
   const apiMode = accountInfo.apiMode;
   const pollIntervalMs = accountInfo.pollIntervalMs;
   const autoStart =
-    apiMode === "rest"
+    apiMode === "addon"
       ? false
       : (opts.autoStart ?? accountInfo.config.autoStart ?? !accountInfo.config.httpUrl);
   const startupTimeoutMs = Math.min(

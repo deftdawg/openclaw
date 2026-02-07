@@ -9,11 +9,11 @@ import type { DmConfig } from "./types.messages.js";
 
 export type SignalReactionNotificationMode = "off" | "own" | "all" | "allowlist";
 export type SignalReactionLevel = "off" | "ack" | "minimal" | "extensive";
-/** API mode: "jsonrpc" uses signal-cli daemon, "rest" uses signal-cli-rest-api. */
-export type SignalApiMode = "jsonrpc" | "rest";
+/** API mode: "jsonrpc" uses signal-cli daemon, "addon" uses signal-cli-rest-api / Home Assistant addon. */
+export type SignalApiMode = "jsonrpc" | "addon";
 
 export type SignalAccountConfig = {
-  /** API mode: "jsonrpc" (signal-cli daemon) or "rest" (signal-cli-rest-api). Default: jsonrpc. */
+  /** API mode: "jsonrpc" (signal-cli daemon) or "addon" (signal-cli-rest-api / Home Assistant addon). Default: jsonrpc. */
   apiMode?: SignalApiMode;
   /** Poll interval in ms for REST API mode (default: 30000). */
   pollIntervalMs?: number;

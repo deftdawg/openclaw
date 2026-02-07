@@ -1,8 +1,13 @@
 import { randomUUID } from "node:crypto";
 import { resolveFetch } from "../infra/fetch.js";
 
-export type SignalApiMode = "jsonrpc" | "rest";
-/** The mode signal-cli-rest-api is running in (json-rpc, native, normal) */
+/**
+ * API mode for Signal integration:
+ * - "jsonrpc": signal-cli daemon (uses /api/v1/... endpoints)
+ * - "addon": signal-cli-rest-api / Home Assistant addon (uses /v1/... endpoints)
+ */
+export type SignalApiMode = "jsonrpc" | "addon";
+/** The execution mode signal-cli-rest-api is running in (json-rpc, native, normal) */
 export type SignalRestServerMode = "json-rpc" | "native" | "normal" | "unknown";
 
 export type SignalRpcOptions = {
@@ -272,7 +277,7 @@ export async function signalRpcRequest<T = unknown>(
   opts: SignalRpcOptions,
 ): Promise<T> {
   const apiMode = opts.apiMode ?? "jsonrpc";
-  if (apiMode === "rest") {
+  if (apiMode === "addon") {
     return signalRestRequest<T>(method, params, opts);
   }
   return signalJsonRpcRequest<T>(method, params, opts);
@@ -284,7 +289,7 @@ export async function signalCheck(
   apiMode: SignalApiMode = "jsonrpc",
 ): Promise<{ ok: boolean; status?: number | null; error?: string | null }> {
   const normalized = normalizeBaseUrl(baseUrl);
-  const endpoint = apiMode === "rest" ? "/v1/health" : "/api/v1/check";
+  const endpoint = apiMode === "addon" ? "/v1/health" : "/api/v1/check";
   try {
     const res = await fetchWithTimeout(`${normalized}${endpoint}`, { method: "GET" }, timeoutMs);
     if (!res.ok) {
@@ -353,7 +358,7 @@ export async function streamSignalEvents(params: {
 }): Promise<void> {
   const apiMode = params.apiMode ?? "jsonrpc";
 
-  if (apiMode === "rest") {
+  if (apiMode === "addon") {
     return streamSignalEventsRestPolling(params);
   }
   return streamSignalEventsSse(params);

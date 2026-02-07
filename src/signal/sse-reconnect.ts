@@ -39,7 +39,7 @@ export async function runSignalSseLoop({
   onEvent,
   policy,
 }: RunSignalSseLoopParams) {
-  const basePolicy = apiMode === "rest" ? REST_RECONNECT_POLICY : DEFAULT_RECONNECT_POLICY;
+  const basePolicy = apiMode === "addon" ? REST_RECONNECT_POLICY : DEFAULT_RECONNECT_POLICY;
   const reconnectPolicy = {
     ...basePolicy,
     ...policy,

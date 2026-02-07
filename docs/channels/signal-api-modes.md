@@ -16,7 +16,7 @@ This document explains the architecture of the Signal channel's dual API support
 The Signal channel supports two API backends:
 
 1. **JSON-RPC mode** (`apiMode: "jsonrpc"`) - Default. Uses signal-cli daemon with JSON-RPC over HTTP and SSE for events.
-2. **REST mode** (`apiMode: "rest"`) - For signal-cli-rest-api / Home Assistant addon. Uses REST endpoints and HTTP polling.
+2. **REST mode** (`apiMode: "addon"`) - For signal-cli-rest-api / Home Assistant addon. Uses REST endpoints and HTTP polling.
 
 ## Files to Modify
 
@@ -27,7 +27,7 @@ The Signal channel supports two API backends:
 Add new config options to `SignalAccountConfig`:
 
 ```typescript
-export type SignalApiMode = "jsonrpc" | "rest";
+export type SignalApiMode = "jsonrpc" | "addon";
 
 export type SignalAccountConfig = {
   apiMode?: SignalApiMode;
@@ -44,7 +44,7 @@ Add validation for new fields in `SignalAccountSchemaBase`:
 
 ```typescript
 export const SignalAccountSchemaBase = z.object({
-  apiMode: z.enum(["jsonrpc", "rest"]).optional(),
+  apiMode: z.enum(["jsonrpc", "addon"]).optional(),
   pollIntervalMs: z.number().int().min(1000).optional(),
   // ... other fields
 }).strict();
@@ -70,7 +70,7 @@ Add help text:
 
 ```typescript
 const FIELD_HELP = {
-  "channels.signal.apiMode": 'API backend: "jsonrpc" or "rest"...',
+  "channels.signal.apiMode": 'API backend: "jsonrpc" or "addon"...',
   "channels.signal.pollIntervalMs": "Poll interval in milliseconds...",
   // ...
 };
@@ -119,7 +119,7 @@ Key patterns:
 // Router pattern
 export async function signalRpcRequest<T>(...) {
   const apiMode = opts.apiMode ?? "jsonrpc";
-  if (apiMode === "rest") {
+  if (apiMode === "addon") {
     return signalRestRequest<T>(method, params, opts);
   }
   return signalJsonRpcRequest<T>(method, params, opts);
@@ -191,7 +191,7 @@ export async function probeSignal(
 - Pass through to `streamSignalEvents()`
 
 ```typescript
-const basePolicy = apiMode === "rest" ? REST_RECONNECT_POLICY : DEFAULT_RECONNECT_POLICY;
+const basePolicy = apiMode === "addon" ? REST_RECONNECT_POLICY : DEFAULT_RECONNECT_POLICY;
 ```
 
 ### 10. Monitor (Main Event Loop)
@@ -205,7 +205,7 @@ const basePolicy = apiMode === "rest" ? REST_RECONNECT_POLICY : DEFAULT_RECONNEC
 
 ```typescript
 const apiMode = accountInfo.apiMode;
-const autoStart = apiMode === "rest" ? false : (opts.autoStart ?? ...);
+const autoStart = apiMode === "addon" ? false : (opts.autoStart ?? ...);
 ```
 
 ### 11. Event Handler Types
@@ -216,9 +216,9 @@ Add `apiMode` to `SignalEventHandlerDeps` and `fetchAttachment` params:
 
 ```typescript
 export type SignalEventHandlerDeps = {
-  apiMode?: "jsonrpc" | "rest";
+  apiMode?: "jsonrpc" | "addon";
   fetchAttachment: (params: {
-    apiMode?: "jsonrpc" | "rest";
+    apiMode?: "jsonrpc" | "addon";
     // ...
   }) => Promise<...>;
   // ...

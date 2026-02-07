@@ -730,7 +730,7 @@ const FIELD_HELP: Record<string, string> = {
   "channels.whatsapp.debounceMs":
     "Debounce window (ms) for batching rapid consecutive messages from the same sender (0 to disable).",
   "channels.signal.apiMode":
-    'API backend: "jsonrpc" (signal-cli daemon) or "rest" (signal-cli-rest-api / Home Assistant addon).',
+    'API backend: "jsonrpc" (signal-cli daemon) or "addon" (signal-cli-rest-api / Home Assistant addon).',
   "channels.signal.pollIntervalMs":
     "Poll interval in milliseconds for REST API mode (default: 30000).",
   "channels.signal.dmPolicy":
